@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="be">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тэст: Правілы правапісу вялікай і малой літар</title>
+    <!-- Падключэнне Tailwind CSS для стыляў -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-white text-slate-800 min-h-screen flex flex-col justify-between p-4 sm:p-6">
+
+    <!-- Асноўны кантэйнер тэста -->
+    <div class="max-w-xl w-full mx-auto my-auto space-y-6">
+
+        <!-- Стартавы экран -->
+        <div id="start-screen" class="space-y-4">
+            <h1 class="text-xl font-bold text-slate-900">Тэст па правілах беларускай арфаграфіі</h1>
+            <p class="text-sm text-slate-600 leading-relaxed">
+                Тэарэтычны тэст з 10 пытанняў на веданне афіцыйных правіл напісання вялікай і малой літар у беларускай мове. 
+                Унутры аб'яднаны пытанні з адным выбарам, некалькімі варыянтамі, а ў самым канцы вас чакае <strong>пісьмовае заданне</strong>, дзе трэба ўвесці адказ самастойна.
+            </p>
+            
+            <div class="p-4 bg-slate-50 rounded-lg text-xs text-slate-600 space-y-2">
+                <p class="font-bold text-slate-800">Сістэма ацэньвання:</p>
+                <p>• Пытанні з адным адказам: <strong>1.0 бала</strong> за правільны выбар.</p>
+                <p>• Пытанні з некалькімі адказамі: <strong>1.0 бала</strong> за абсалютна правільны выбар, <strong>0.5 бала</strong> за частковы выбар (калі пазначаны толькі некаторыя правільныя варыянты і няма памылак).</p>
+                <p>• Пісьмовае пытанне: <strong>1.0 бала</strong> за дакладны ўвод правільнага адказу.</p>
+            </div>
+
+            <button onclick="startTest()" class="w-full bg-slate-950 hover:bg-slate-800 text-white font-medium py-2.5 rounded-lg text-sm transition-colors">
+                Пачаць тэст
+            </button>
+        </div>
+
+        <!-- Экран праходжання тэста -->
+        <div id="test-screen" class="hidden space-y-4">
+            <!-- Інфармацыйны радок -->
+            <div class="flex items-center justify-between text-xs text-slate-400 border-b pb-2">
+                <span id="question-type-label" class="font-medium">Адзін выбар</span>
+                <span>Пытанне <span id="current-index">1</span> з 10</span>
+            </div>
+
+            <!-- Тэкст пытання -->
+            <h2 id="question-text" class="text-base font-semibold text-slate-900 leading-snug">
+                Тэкст пытання
+            </h2>
+
+            <!-- Кнопка падказкі -->
+            <div>
+                <button onclick="toggleHint()" class="text-xs text-slate-400 hover:text-slate-600 underline">
+                    Паказаць правіла-падказку
+                </button>
+                <div id="hint-box" class="hidden mt-2 p-3 bg-amber-50 text-amber-900 rounded text-xs leading-relaxed">
+                    Правіла
+                </div>
+            </div>
+
+            <!-- Варыянты адказаў / Поле ўводу -->
+            <div id="options-box" class="space-y-2 pt-2">
+                <!-- Генеруецца дынамічна -->
+            </div>
+
+            <!-- Блок з вынікам праверкі -->
+            <div id="result-box" class="hidden p-3 rounded text-xs leading-relaxed">
+                <p id="result-title" class="font-bold mb-1">Вынік</p>
+                <p id="result-desc"></p>
+            </div>
+
+            <!-- Кнопкі кіравання -->
+            <div class="flex items-center justify-between pt-4 border-t">
+                <button onclick="resetToStart()" class="text-xs text-slate-400 hover:text-slate-600">
+                    На галоўную
+                </button>
+                <button id="action-btn" onclick="handleAction()" class="bg-slate-950 hover:bg-slate-800 text-white font-medium px-4 py-2 rounded text-xs transition-colors">
+                    Праверыць
+                </button>
+            </div>
+        </div>
+
+        <!-- Экран фінальных вынікаў -->
+        <div id="final-screen" class="hidden text-center space-y-4">
+            <h2 class="text-lg font-bold text-slate-900">Тэст завершаны</h2>
+            
+            <p class="text-sm text-slate-600">
+                Ваш вынік: <strong class="text-base text-slate-900"><span id="score-text">0</span> з 10</strong> балаў.
+            </p>
+
+            <div id="commentary-box" class="p-4 bg-slate-50 text-xs text-slate-600 rounded leading-relaxed">
+                Каментарый
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="startTest()" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 rounded text-xs transition-colors">
+                    Прайсці яшчэ раз
+                </button>
+                <button onclick="resetToStart()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 rounded text-xs transition-colors">
+                    На галоўную
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Падвал -->
+    <div class="text-center text-[10px] text-slate-300 py-4">
+        Беларускі правапіс • На аснове актуальных правіл беларускай арфаграфіі
+    </div>
+
+    <!-- Логіка тэста (JavaScript) -->
+    <script>
+        const questionsList = [
+            {
+                question: "Згодна з правіламі беларускай арфаграфіі, з якой літары пішуцца назвы жыхароў гарадоў і краін (напрыклад: мінчанін, беларус, гамяльчанін)?",
+                hint: "Назвы людзей па месцы жыхарства, нацыянальнасці ці паходжанні з'яўляюцца агульнымі назоўнікамі і не адносяцца да ўласных імёнаў.",
+                isMultiple: false,
+                options: [
+                    { text: "Заўсёды з малой літары", isCorrect: true, feedback: "Правільна! Назвы жыхароў краін, гарадоў і рэгіёнаў у беларускай мове заўсёды пішуцца з малой літары (беларус, мінчанін)." },
+                    { text: "Заўсёды з вялікай літары", isCorrect: false, feedback: "Няправільна. У адрозненне ад некаторых іншых моў (напрыклад, англійскай), у беларускай мове назвы нацыянальнасцей пішуцца з малой літары." },
+                    { text: "З вялікай літары, толькі калі гэта жыхар сталіцы", isCorrect: false, feedback: "Няправільна. Статус горада ніяк не ўплывае на гэтае правіла. Любая падобная назва пішацца з малой літары." }
+                ]
+            },
+            {
+                question: "Пры дапамозе якіх суфіксаў утвараюцца прыналежныя прыметнікі ад уласных імёнаў, якія пішуцца з ВЯЛІКАЙ літары (выберыце некалькі)?",
+                hint: "Шукайце суфіксы, якія абазначаюць індывідуальную прыналежнасць канкрэтнаму чалавеку (адказваюць на пытанне 'чый?').",
+                isMultiple: true,
+                options: [
+                    { text: "-аў- (-ав-), -еў- (-ев-)", isCorrect: true, feedback: "Правільна! Напрыклад: Коласаў верш, Купалава спадчына." },
+                    { text: "-ын- (-ін-)", isCorrect: true, feedback: "Правільна! Напрыклад: Насцін сшытак, матчына парада." },
+                    { text: "-ск- (-аўск-)", isCorrect: false, feedback: "Няправільна. Прыметнікі на -ск- пішуцца з малой літары (купалаўскі стыль), за выключэннем выпадкаў, калі яны ўваходзяць у склад афіцыйных назваў." },
+                    { text: "-н-", isCorrect: false, feedback: "Няправільна. Суфікс -н- звычайна служыць для ўтварэння адносных прыметнікаў, якія пішуцца з малой літары." }
+                ]
+            },
+            {
+                question: "Як пішуцца агульныя (родавыя) паняцці ў складзе геаграфічных назваў (напрыклад: рака, возера, гара, вуліца) у сярэдзіне сказу?",
+                hint: "Гэтыя словы паказваюць на тып геаграфічнага аб'екта і з'яўляюцца агульнымі назоўнікамі.",
+                isMultiple: false,
+                options: [
+                    { text: "З малой літары", isCorrect: true, feedback: "Правільна! Родавыя паняцці накшталт 'рака', 'возера', 'вуліца' пішуцца з малой літары (рака Дняпро, возера Нарач)." },
+                    { text: "З вялікай літары", isCorrect: false, feedback: "Няправільна. Яны пішуцца з вялікай літары толькі ў тым выпадку, калі пачынаюць сказ." },
+                    { text: "Залежыць ад памеру геаграфічнага аб'екта", isCorrect: false, feedback: "Няправільна. Маштаб і памер аб'екта не ўплываюць на правілы арфаграфіі." }
+                ]
+            },
+            {
+                question: "У якіх выпадках словы 'зямля', 'сонца', 'месяц' пішуцца з ВЯЛІКАЙ літары (выберыце некалькі)?",
+                hint: "Звярніце ўвагу на навуковыя астранамічныя значэнні гэтых слоў у адрозненне ад бытавых або паэтычных.",
+                isMultiple: true,
+                options: [
+                    { text: "Калі яны выкарыстоўваюцца як астранамічныя назвы планет або касмічных тэл", isCorrect: true, feedback: "Правільна! Напрыклад: 'Зямля круціцца вакол Сонца'." },
+                    { text: "У мастацкай літаратуры ў значэнні 'глеба, паверхня'", isCorrect: false, feedback: "Няправільна. У гэтым значэнні слова пішацца з малой літары (упаў на зямлю)." },
+                    { text: "У значэнні 'Радзіма, родны край, тэрыторыя'", isCorrect: false, feedback: "Няправільна. У такіх выпадках пішацца з малой літары (беларуская зямля)." },
+                    { text: "У складзе астранамічных тэрмінаў і назваў касмічных сістэм", isCorrect: true, feedback: "Правільна! Калі гэтыя словы абазначаюць канкрэтныя астранамічныя аб'екты." }
+                ]
+            },
+            {
+                question: "Якое правіла дзейнічае для напісання назвы вышэйшай дзяржаўнай пасады ў Рэспубліцы Беларусь?",
+                hint: "Гэта афіцыйнае выключэнне, прынятае для падкрэслівання сімвалічнага статусу самай высокай дзяржаўнай пасады краіны.",
+                isMultiple: false,
+                options: [
+                    { text: "Усе словы пішуцца з вялікай літары (акрамя службовых)", isCorrect: true, feedback: "Правільна! Згодна з правіламі: Прэзідэнт Рэспублікі Беларусь." },
+                    { text: "З вялікай літары пішацца толькі першае слова пасады", isCorrect: false, feedback: "Няправільна. Для вышэйшай пасады дзейнічае асаблівае правіла — усе словы пішуцца з вялікай." },
+                    { text: "Усе словы заўсёды пішуцца з малой літары", isCorrect: false, feedback: "Няправільна. Вышэйшыя афіцыйныя пасады на пісьме патрабуюць выкарыстання вялікай літары." }
+                ]
+            },
+            {
+                question: "Выберыце правільныя сцвярджэнні адносна правапісу назваў кніг, часопісаў, газет і кінафільмаў (выберыце некалькі):",
+                hint: "Успомніце правілы вылучэння рэальных уласных назваў літаратурных і медыйных твораў на пісьме.",
+                isMultiple: true,
+                options: [
+                    { text: "Яны заўсёды вылучаюцца двукоссямі", isCorrect: true, feedback: "Правільна! Напрыклад: газета «Звязда», раман «Новая зямля»." },
+                    { text: "З вялікай літары пішацца толькі першае слова назвы і ўласныя імёны ўнутры яе", isCorrect: true, feedback: "Правільна! Напрыклад: раман «Людзі на балоце» (словы 'на' і 'балоце' пішуцца з малой)." },
+                    { text: "Усе словы ў назве заўсёды пішуцца з вялікай літары", isCorrect: false, feedback: "Няправільна. З вялікай літары пішацца толькі першае слова і ўласныя імёны ў складзе назвы." },
+                    { text: "Яны пішуцца без двукоссяў, калі перад імі стаіць родавае паняцце", isCorrect: false, feedback: "Няправільна. Наяўнасць родавых слоў (раман, часопіс) якраз патрабуе выкарыстання двукоссяў." }
+                ]
+            },
+            {
+                question: "Як, згодна з правіламі, пішуцца афіцыйныя назвы ўстаноў, арганізацый, таварыстваў і прадпрыемстваў?",
+                hint: "У назвах арганізацый і ўстаноў дзейнічае агульнае арфаграфічнае правіла 'першага слова'.",
+                isMultiple: false,
+                options: [
+                    { text: "З вялікай літары пішацца толькі першае слова назвы (і ўласныя імёны ўнутры яе)", isCorrect: true, feedback: "Правільна! Напрыклад: Нацыянальная акадэмія навук Беларусі, Беларускі дзяржаўны ўніверсітэт." },
+                    { text: "Усе словы ў назве абавязкова пішуцца з вялікай літары", isCorrect: false, feedback: "Няправільна. Напісанне ўсіх слоў з вялікай літары (напрыклад: Беларускі Дзяржаўны Ўніверсітэт) лічыцца арфаграфічнай памылкай." },
+                    { text: "Усе словы пішуцца з малой літары", isCorrect: false, feedback: "Няправільна. Першае слова афіцыйнай назвы заўсёды павінна быць з вялікай літары." }
+                ]
+            },
+            {
+                question: "Правапіс якіх катэгорый слоў заўсёды патрабуе выкарыстання ВЯЛІКАЙ літары (выберыце некалькі)?",
+                hint: "Падумайце, якія з гэтых катэгорый слоў з'яўляюцца чыстымі ўласнымі імёнамі і адрозніваюць канкрэтны аб'ект ад групы агульных.",
+                isMultiple: true,
+                options: [
+                    { text: "Клічкі жывёл і птушак", isCorrect: true, feedback: "Правільна: сабака Шарык, конь Гняды." },
+                    { text: "Імёны, прозвішчы, псеўданімы і мянушкі людзей", isCorrect: true, feedback: "Правільна: Янка Купала, Тэрэза." },
+                    { text: "Астранамічныя назвы планет, зорак, сузор'яў", isCorrect: true, feedback: "Правільна: планета Марс, сузор'е Арыён." },
+                    { text: "Назвы жыхароў па гарадах ці краінах", isCorrect: false, feedback: "Няправільна. Назвы жыхароў пішуцца з малой літары." }
+                ]
+            },
+            {
+                question: "З якой літары пішуцца прыметнікі з суфіксам -ск-, утвораныя ад уласных імёнаў ці геаграфічных назваў (калі яны не пачынаюць афіцыйных назваў)?",
+                hint: "Параўнайце: Коласаў верш (прыналежны, індывідуальны) і коласаўскі стыль (адносны, агульная характарыстыка).",
+                isMultiple: false,
+                options: [
+                    { text: "Заўсёды з малой літары", isCorrect: true, feedback: "Правільна! Прыметнікі на -ск- пішуцца з малой літары (коласаўскі стыль, купалаўскія чытанні, мінскія вуліцы)." },
+                    { text: "Заўсёды з вялікай літары", isCorrect: false, feedback: "Няправільна. Прыметнікі з суфіксам -ск- патрабуюць малой літары, калі яны не з'яўляюцца часткай афіцыйнай назвы." },
+                    { text: "З вялікай літары, толькі калі яны ўтвораны ад прозвішчаў вядомых асоб", isCorrect: false, feedback: "Няправільна. Прозвішча аўтара не змяняе гэтага агульнага правіла." }
+                ]
+            }
+        ];
+
+        const writtenQuestionObj = {
+            question: "Як правільна напісаць назву нашай Галактыкі: «млечны шлях»? Напішыце гэтыя два словы з ужываннем правільных (вялікіх ці малых) літар.",
+            hint: "У складаных уласных астранамічных назвах усе словы (акрамя родавых паняццяў накшталт зорка, планета, спадарожнік) пішуцца з вялікай літары.",
+            isWritten: true,
+            correctAnswer: "Млечны Шлях"
+        };
+
+        let activeQuestions = [];
+        let index = 0;
+        let points = 0; 
+        let selectedAnswers = [];
+        let checked = false;
+
+        function startTest() {
+            const shuffledTheory = JSON.parse(JSON.stringify(questionsList)).sort(() => Math.random() - 0.5).slice(0, 9);
+            shuffledTheory.forEach(q => q.options.sort(() => Math.random() - 0.5));
+            
+            activeQuestions = [...shuffledTheory, JSON.parse(JSON.stringify(writtenQuestionObj))];
+            
+            index = 0;
+            points = 0;
+
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('final-screen').classList.add('hidden');
+            document.getElementById('test-screen').classList.remove('hidden');
+
+            showQuestion();
+        }
+
+        function resetToStart() {
+            document.getElementById('test-screen').classList.add('hidden');
+            document.getElementById('final-screen').classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('hidden');
+        }
+
+        function showQuestion() {
+            checked = false;
+            selectedAnswers = [];
+
+            const q = activeQuestions[index];
+
+            document.getElementById('current-index').innerText = index + 1;
+            document.getElementById('question-text').innerText = q.question;
+            document.getElementById('hint-box').innerText = q.hint;
+            document.getElementById('hint-box').classList.add('hidden');
+            document.getElementById('result-box').classList.add('hidden');
+
+            const typeLabel = document.getElementById('question-type-label');
+            const box = document.getElementById('options-box');
+            box.innerHTML = '';
+
+            if (q.isWritten) {
+                typeLabel.innerText = "ПІСЬМОВЫ АДКАЗ (увядзіце тэкст самастойна)";
+                typeLabel.className = "font-semibold text-emerald-600";
+
+                box.innerHTML = `
+                    <div class="space-y-2">
+                        <input type="text" id="written-answer" 
+                               class="w-full p-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-slate-950" 
+                               placeholder="Напішыце адказ па-беларуску..."
+                               onkeydown="if(event.key === 'Enter') handleAction();">
+                        <p class="text-[11px] text-slate-400">Калі ласка, улічвайце раскладку, правільны рэгістр літар і прабелы.</p>
+                    </div>
+                `;
+                setTimeout(() => document.getElementById('written-answer').focus(), 50);
+
+            } else {
+                if (q.isMultiple) {
+                    typeLabel.innerText = "НЕКАЛЬКІ ВАРЫЯНТАЎ (квадратныя кнопкі)";
+                    typeLabel.className = "font-semibold text-purple-600";
+                } else {
+                    typeLabel.innerText = "АДЗІН ВАРЫЯНТ (круглыя кнопкі)";
+                    typeLabel.className = "font-semibold text-blue-600";
+                }
+
+                q.options.forEach((opt, idx) => {
+                    const optId = `opt-${idx}`;
+                    const div = document.createElement('div');
+                    div.id = `wrap-opt-${idx}`;
+                    div.className = "flex items-center gap-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer text-sm transition-colors";
+                    
+                    div.onclick = () => selectOption(idx);
+
+                    const control = q.isMultiple 
+                        ? `<input type="checkbox" id="${optId}" class="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer pointer-events-none">`
+                        : `<input type="radio" name="opts" id="${optId}" class="w-4 h-4 border-slate-300 text-slate-900 focus:ring-0 cursor-pointer pointer-events-none">`;
+
+                    div.innerHTML = `
+                        ${control}
+                        <span class="cursor-pointer select-none w-full">${opt.text}</span>
+                    `;
+                    box.appendChild(div);
+                });
+            }
+
+            setActionButtonMode('submit');
+        }
+
+        function selectOption(idx) {
+            if (checked) return;
+
+            const q = activeQuestions[index];
+
+            if (q.isMultiple) {
+                const pos = selectedAnswers.indexOf(idx);
+                const input = document.getElementById(`opt-${idx}`);
+                const wrap = document.getElementById(`wrap-opt-${idx}`);
+
+                if (pos === -1) {
+                    selectedAnswers.push(idx);
+                    input.checked = true;
+                    wrap.className = "flex items-center gap-3 p-3 border-2 border-slate-950 bg-slate-50 rounded-lg cursor-pointer text-sm font-medium";
+                } else {
+                    selectedAnswers.splice(pos, 1);
+                    input.checked = false;
+                    wrap.className = "flex items-center gap-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer text-sm transition-colors";
+                }
+            } else {
+                selectedAnswers = [idx];
+                q.options.forEach((_, i) => {
+                    const input = document.getElementById(`opt-${i}`);
+                    const wrap = document.getElementById(`wrap-opt-${i}`);
+                    if (i === idx) {
+                        input.checked = true;
+                        wrap.className = "flex items-center gap-3 p-3 border-2 border-slate-950 bg-slate-50 rounded-lg cursor-pointer text-sm font-medium";
+                    } else {
+                        input.checked = false;
+                        wrap.className = "flex items-center gap-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer text-sm transition-colors";
+                    }
+                });
+            }
+        }
+
+        function toggleHint() {
+            document.getElementById('hint-box').classList.toggle('hidden');
+        }
+
+        function handleAction() {
+            if (!checked) {
+                checkAnswers();
+            } else {
+                nextQuestion();
+            }
+        }
+
+        function checkAnswers() {
+            const q = activeQuestions[index];
+            let earnedPoints = 0;
+            let isCorrect = false;
+
+            if (q.isWritten) {
+                const inputEl = document.getElementById('written-answer');
+                const userVal = inputEl.value.trim();
+
+                if (userVal === "") return; 
+
+                checked = true;
+                inputEl.disabled = true;
+
+                const normUser = userVal.replace(/\s+/g, ' ').replace(/у/g, 'ў').replace(/У/g, 'Ў');
+                const normCorrect = q.correctAnswer.replace(/\s+/g, ' ').replace(/у/g, 'ў').replace(/У/g, 'Ў');
+
+                isCorrect = (normUser === normCorrect);
+                earnedPoints = isCorrect ? 1.0 : 0.0;
+
+                if (isCorrect) {
+                    inputEl.className = "w-full p-3 border-2 border-green-600 bg-green-50 text-green-950 rounded-lg text-sm font-medium";
+                } else {
+                    inputEl.className = "w-full p-3 border-2 border-red-600 bg-red-50 text-red-950 rounded-lg text-sm font-medium";
+                }
+
+            } else {
+                if (selectedAnswers.length === 0) return;
+
+                checked = true;
+
+                q.options.forEach((opt, idx) => {
+                    const wrap = document.getElementById(`wrap-opt-${idx}`);
+                    const input = document.getElementById(`opt-${idx}`);
+                    input.disabled = true;
+
+                    if (opt.isCorrect) {
+                        wrap.className = "flex items-center gap-3 p-3 border-2 border-green-600 bg-green-50 text-green-950 rounded-lg text-sm font-medium";
+                    } else if (selectedAnswers.includes(idx)) {
+                        wrap.className = "flex items-center gap-3 p-3 border-2 border-red-600 bg-red-50 text-red-950 rounded-lg text-sm font-medium";
+                    } else {
+                        wrap.className = "flex items-center gap-3 p-3 border border-slate-100 rounded-lg text-sm opacity-50";
+                    }
+                });
+
+                if (q.isMultiple) {
+                    const totalCorrect = q.options.filter(o => o.isCorrect).length;
+                    const correctSelected = q.options.filter((o, idx) => o.isCorrect && selectedAnswers.includes(idx)).length;
+                    const incorrectSelected = q.options.filter((o, idx) => !o.isCorrect && selectedAnswers.includes(idx)).length;
+
+                    if (incorrectSelected > 0) {
+                        earnedPoints = 0;
+                    } else if (correctSelected === totalCorrect) {
+                        earnedPoints = 1.0;
+                    } else if (correctSelected > 0) {
+                        earnedPoints = 0.5;
+                    } else {
+                        earnedPoints = 0;
+                    }
+                } else {
+                    earnedPoints = q.options[selectedAnswers[0]].isCorrect ? 1.0 : 0.0;
+                }
+            }
+
+            points += earnedPoints;
+
+            const resBox = document.getElementById('result-box');
+            const resTitle = document.getElementById('result-title');
+            const resDesc = document.getElementById('result-desc');
+
+            resBox.classList.remove('hidden');
+
+            if (q.isWritten) {
+                if (isCorrect) {
+                    resBox.className = "p-3 rounded text-xs leading-relaxed bg-green-50 border border-green-200 text-green-900";
+                    resTitle.innerText = "Правільна! (+1.0 бала)";
+                    resDesc.innerHTML = `Вы выдатна напісалі назву: <strong>${q.correctAnswer}</strong>.`;
+                } else {
+                    resBox.className = "p-3 rounded text-xs leading-relaxed bg-red-50 border border-red-200 text-red-900";
+                    resTitle.innerText = "Памылка! (+0.0 балаў)";
+                    resDesc.innerHTML = `Правільны запіс: <strong>${q.correctAnswer}</strong>. У складаных астранамічных назвах усе словы, акрамя родавых, пішуцца з вялікай літары.`;
+                }
+            } else {
+                if (earnedPoints === 1.0) {
+                    resBox.className = "p-3 rounded text-xs leading-relaxed bg-green-50 border border-green-200 text-green-900";
+                    resTitle.innerText = "Правільна! (+1.0 бала)";
+                } else if (earnedPoints === 0.5) {
+                    resBox.className = "p-3 rounded text-xs leading-relaxed bg-amber-50 border border-amber-200 text-amber-900";
+                    resTitle.innerText = "Часткова правільна! (+0.5 бала)";
+                } else {
+                    resBox.className = "p-3 rounded text-xs leading-relaxed bg-red-50 border border-red-200 text-red-900";
+                    resTitle.innerText = "Няправільна! (+0.0 балаў)";
+                }
+
+                let text = "";
+                if (q.isMultiple) {
+                    text = "<strong>Правільныя варыянты:</strong><br>" + q.options
+                        .filter(o => o.isCorrect)
+                        .map(o => `• <em>${o.text}</em> — ${o.feedback}`)
+                        .join('<br>');
+                } else {
+                    text = q.options[selectedAnswers[0]].feedback;
+                }
+                resDesc.innerHTML = text;
+            }
+
+            setActionButtonMode('next');
+        }
+
+        function nextQuestion() {
+            index++;
+            if (index < activeQuestions.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('test-screen').classList.add('hidden');
+            document.getElementById('final-screen').classList.remove('hidden');
+
+            document.getElementById('score-text').innerText = points;
+            
+            const comm = document.getElementById('commentary-box');
+            const ratio = points / activeQuestions.length;
+
+            if (ratio === 1) {
+                comm.innerHTML = "🏆 <strong>Ідэальны вынік!</strong> Вы беспамылкова ведаеце як тэорыю, так і практыку правапісу вялікай і малой літар у беларускай мове.";
+            } else if (ratio >= 0.8) {
+                comm.innerHTML = "✨ <strong>Выдатна!</strong> Вы паказалі глыбокія веды і ўпэўнена справіліся з большасцю складаных тэарэтычных пытанняў, уключаючы пісьмовае заданне.";
+            } else if (ratio >= 0.5) {
+                comm.innerHTML = "👍 <strong>Нядрэнна!</strong> Большасць правіл вы ведаеце, аднак некаторыя тэарэтычныя нюансы або пісьмовыя варыянты выклікалі цяжкасці.";
+            } else {
+                comm.innerHTML = "📚 <strong>Варта паўтарыць тэорыю.</strong> Тэма ўжывання вялікіх літар патрабуе дадатковай увагі. Рэкамендуем прачытаць правілы і прайсці тэст нанова.";
+            }
+        }
+
+        function setActionButtonMode(mode) {
+            const btn = document.getElementById('action-btn');
+            if (mode === 'submit') {
+                btn.innerText = "Праверыць";
+                btn.className = "bg-slate-950 hover:bg-slate-800 text-white font-medium px-4 py-2 rounded text-xs transition-colors";
+            } else {
+                btn.innerText = "Далей";
+                btn.className = "bg-slate-700 hover:bg-slate-600 text-white font-medium px-4 py-2 rounded text-xs transition-colors";
+            }
+        }
+    </script>
+</body>
+</html>
